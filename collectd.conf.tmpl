@@ -1,0 +1,62 @@
+# Install:
+#  You can usually install with apt-get or yum
+
+# Documentation:
+#   https://collectd.org/documentation.shtml
+
+# System modifications:
+#   None
+
+# Config file modifications:
+#   If you want to use a custom source name, change
+#   the "Hostname" paramter and set
+#
+#     FQDNLookup false
+#
+#   Make sure TypesDB points to a valid file:
+#
+#     which %%%COLLECTDSHARE%%%/types.db
+#
+#   Create the directory managed_config and put
+#   extra config files there:
+#
+#     mkdir %%%COLLECTDMANAGEDCONFIG%%%
+#
+
+TypesDB "%%%TYPESDB%%%"
+
+#   If you use the Hostname parameter, you
+#   must quote ("...") the second argument
+### Hostname "<YOUR_HOSTNAME_HERE>"
+
+%%%SOURCENAMEINFO%%%
+Interval 10
+Timeout 2
+ReadThreads 5
+
+LoadPlugin logfile
+
+<Plugin logfile>
+        LogLevel "info"
+        File "/var/log/signalfx-collectd.log"
+        Timestamp true
+        PrintSeverity false
+</Plugin>
+
+LoadPlugin cpu
+LoadPlugin cpufreq
+LoadPlugin df
+LoadPlugin disk
+LoadPlugin interface
+LoadPlugin load
+LoadPlugin memory
+LoadPlugin network
+LoadPlugin protocols
+LoadPlugin uptime
+
+<LoadPlugin python>
+        Globals true
+</LoadPlugin>
+
+Include "%%%COLLECTDMANAGEDCONFIG%%%"
+

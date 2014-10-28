@@ -10,10 +10,11 @@ Installation
 ------------
 
   ```
-  git clone https://github.com/signalfx/signalfx-collectd-configs.git /opt
-  cp /opt/collectd.conf /etc/collectd.d/collectd.conf
-  mkdir /etc/collectd.d/managed_config
-  cp /opt/signalfx-collectd-configs/managed_config/10-bob.conf /etc/collectd.d/managed_config/
+  git clone https://github.com/signalfx/signalfx-collectd-configs.git
+  cd signalfx-collectd-configs
+  ./install.sh /path/to/collectd
+  # if you want to add another config cp it into your collectd configuration directory managed_config dir
+  cp managed_config/10-bob.conf /etc/collectd.d/managed_config/
   ```
 
 Help
