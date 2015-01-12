@@ -67,22 +67,10 @@ get_sfx_collectd(){
     COLLECTD=/opt/signalfx-collectd/sbin/collectd
 }
 
-install_signalfx_plugin(){
-    if [ -d /opt/signalfx-collectd-plugin ]; then
-        printf "Updating signalfx collectd plugin..."
-        (cd /opt/signalfx-collectd-plugin && git pull --rebase)
-        check_for_err "Success\n"
-    else
-       printf "Fetching signalfx collectd plugin..."
-       (cd /opt && git clone https://github.com/signalfx/signalfx-collectd-plugin)
-       check_for_err "Success\n"
-    fi
-}
 
 main() {
   figure_host_info
   find_collectd
-  install_signalfx_plugin
 
   "${SCRIPT_DIR}/install.sh" "$@" ${COLLECTD}
 }

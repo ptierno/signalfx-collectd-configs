@@ -144,13 +144,8 @@ install_config(){
     check_for_err "Success\n"
 }
 
-install_signalfx_plugin(){
-    echo "Installing SignalFuse plugin"
-    PLUGIN_INSTALL_DIR=/opt/signalfx-collectd-plugin
-    if [ ! -d $PLUGIN_INSTALL_DIR ]; then
-       echo "Please install https://github.com/signalfx/signalfx-collectd-plugin in /opt"
-       exit 1;
-    fi
+install_write_http_plugin(){
+
     if [ -z "$API_TOKEN" ]; then
        if [ -z "${SFX_USER}" ]; then
            read -p "Input SignalFuse user name: " SFX_USER
@@ -158,7 +153,7 @@ install_signalfx_plugin(){
                read -p "Invalid input. Input SignalFuse user name: " SFX_USER
            done
        fi
-       API_TOKEN=$(python ${PLUGIN_INSTALL_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_ORG} "${SFX_USER}")
+       API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_ORG} "${SFX_USER}")
        if [ -z "$API_TOKEN" ]; then
           echo "Failed to get SignalFuse API token";
           exit 2;
@@ -166,17 +161,16 @@ install_signalfx_plugin(){
     fi
     printf "Fixing SignalFX plugin configuration.."
     sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#" \
-        -e "s#TypesDB \".*\"#TypesDB \"${TYPESDB}\"#" \
-        "${MANAGED_CONF_DIR}/10-signalfx.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-signalfx.conf"
+        "${MANAGED_CONF_DIR}/10-write_http-plugin.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-write_http-plugin.conf"
     check_for_err "Success\n";
 }
 
 copy_configs(){
-   okay_ver=$(vercomp "$COLLECTD_VER" 5.2)
-   if [ "$okay_ver" !=  2 ]; then
-       install_config 10-aggregation-cpu.conf "CPU Aggregation Plugin"
-   fi
-   install_signalfx_plugin
+    okay_ver=$(vercomp "$COLLECTD_VER" 5.2)
+    if [ "$okay_ver" !=  2 ]; then
+        install_config 10-aggregation-cpu.conf "CPU Aggregation Plugin"
+    fi
+    install_write_http_plugin
 }
 
 verify_configs(){
@@ -188,6 +182,10 @@ verify_configs(){
 main() {
     get_collectd_config
     get_source_config
+    okay_ver=$(vercomp "$COLLECTD_VER" 5.4.0)
+    if [ "$okay_ver" != 2 ]; then
+        WRITE_QUEUE_CONFIG="WriteQueueLimitHigh 2000000\\nWriteQueueLimitLow  1800000";
+    fi
 
     printf "Making managed config dir %s ..." "${COLLECTD_MANAGED_CONFIG_DIR}"
     mkdir -p "${COLLECTD_MANAGED_CONFIG_DIR}"
@@ -202,6 +200,7 @@ main() {
     printf "Installing signalfx collectd configuration to %s: " "${COLLECTD_CONFIG}"
     sed -e "s#%%%TYPESDB%%%#${TYPESDB}#" \
         -e "s#%%%SOURCENAMEINFO%%%#${SOURCE_NAME_INFO}#" \
+	-e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
         -e "s#%%%COLLECTDMANAGEDCONFIG%%%#${COLLECTD_MANAGED_CONFIG_DIR}#" \
         "${BASE_DIR}/collectd.conf.tmpl" > "${COLLECTD_CONFIG}"
     check_for_err "Success\n"
